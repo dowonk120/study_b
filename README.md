@@ -1,7 +1,12 @@
-https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+
 
 # 📄 법률 문서 요약 및 상담 챗봇 프로젝트
 ML + DL + LLM 융합 실제 적용 사례
+
+## 🔍 링크
+
+https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+
 
 ## 🔍 프로젝트 개요
 
