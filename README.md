@@ -5,7 +5,9 @@ ML + DL + LLM 융합 실제 적용 사례
 
 ## 🔍 링크
 
-https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+법원 사이트 : https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+
+api : https://www.data.go.kr/data/15057123/openapi.do?recommendDataYn=Y
 
 
 ## 🔍 프로젝트 개요
