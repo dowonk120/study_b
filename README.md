@@ -90,6 +90,18 @@ api : https://www.data.go.kr/data/15057123/openapi.do?recommendDataYn=Y
 
 ### 1️⃣ 문서 분류 (ML)
 
+
+- ML 항목 예시
+  
+| 항목       | 승패 예측                   | 소요 기간 예측            |
+| -------- | ----------------------- | ------------------- |
+| 🎯 문제 유형 | **분류 (Classification)** | **회귀 (Regression)** |
+| 🎯 예측값   | `0`, `1` (또는 다중 클래스)    | `243`, `365` (일 수)  |
+| 🎯 평가 지표 | Accuracy, F1-score, AUC | MAE, RMSE, R²       |
+| 🎯 학습 대상 | 승/패 라벨                  | 접수일 \~ 판결일 계산한 숫자   |
+| 🎯 모델 선택 | 로지스틱 회귀, SVM 등          | 선형 회귀, 랜덤 포레스트 회귀 등 |
+
+
 - TF-IDF + Logistic Regression / SVM
 
 - Feature: 문서 제목 + 본문 일부
