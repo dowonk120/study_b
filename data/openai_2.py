@@ -1,12 +1,39 @@
+import pandas as pd
+import zipfile
+
+dfs = {}  # 파일 이름 → DataFrame 저장 딕셔너리
+
+with zipfile.ZipFile("result.zip") as z:
+    for filename in z.namelist():           # ZIP 안 모든 파일 이름
+        if filename.endswith(".csv"):       # CSV만 선택
+            with z.open(filename) as f:
+                dfs[filename] = pd.read_csv(f)
+
+# 결과
+for name, df in dfs.items():
+    print(name, df.shape)
+
+
+
+# pd.set_option('display.max_colwidth', None)  ----------------------------데이터 프레임에서 판례문 모든 글자 보여주는 설정
+
+
+df = dfs['result_2.csv'] #------------------------각자 맡으신걸로 변경해주시면됩니다.
+
+
+
+
+
 import re
 import pandas as pd
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-import time
-from tqdm import tqdm  # ✅ 진행률 표시
+from tqdm import tqdm
 
 # ---------- 1️⃣ 모델 설정 ----------
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -62,26 +89,43 @@ prompt = PromptTemplate(
 chain = LLMChain(llm=llm, prompt=prompt, output_parser=parser)
 partial_vars = {"format_instructions": parser.get_format_instructions()}
 
-# ---------- 5️⃣ 사용자 설정 ----------
-start_index = 0      # ✅ 시작 위치 (다음 실행 시 1000, 2000으로 변경)
-batch_size = 1000    # ✅ 처리할 건수
-end_index = min(start_index + batch_size, len(df))
-
-# ---------- 6️⃣ 실행 ----------
-results = []
-for idx in tqdm(range(start_index, end_index), desc="🔄 요약 진행중", unit="건"):
-    case_text = df.loc[idx, "판례내용"]
+# ---------- 5️⃣ 비동기 처리 함수 ----------
+def process_row(idx, case_text):
     clean_text = preprocess_text(case_text)
-
     try:
         result = chain.invoke({"row_info": clean_text, **partial_vars})
-        results.append(result['text'].model_dump())
+        return result['text'].model_dump()
     except Exception as e:
-        results.append({"error": str(e)})
-    
-    time.sleep(0.3)
+        return {"error": str(e)}
 
-# ---------- 7️⃣ CSV 저장 ----------
-output_file = f"legal_summary_{start_index}_{end_index}.csv"
-pd.DataFrame(results).to_csv(output_file, index=False)
-print(f"✅ {output_file} 저장 완료 ({start_index} ~ {end_index-1}건)")
+async def process_batch(df, start_index=0, batch_size=1000, max_workers=5):
+    end_index = min(start_index + batch_size, len(df))
+    results = []
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        loop = asyncio.get_event_loop()
+        tasks = [
+            loop.run_in_executor(executor, process_row, idx, df.loc[idx, "판례내용"])
+            for idx in range(start_index, end_index)
+        ]
+        for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="🔄 병렬 요약 진행중", unit="건"):
+            result = await f
+            results.append(result)
+
+    output_file = f"legal_summary_{start_index}_{end_index}.csv"
+    pd.DataFrame(results).to_csv(output_file, index=False)
+    print(f"✅ {output_file} 저장 완료 ({start_index} ~ {end_index-1}건)")
+
+
+
+
+# asyncio.run(process_batch(df, start_index=0, batch_size=1000, max_workers=5)) ---------실행 코드 
+# start_index값이랑 batch_size만 변경해서 원하는 건수만큼 돌려주시면됩니다.
+# 에러나면 밑에 코드 사용하세요.
+
+
+
+
+# import nest_asyncio --------------- 주피터 실행코드입니다.
+# nest_asyncio.apply()
+# await process_batch(df, start_index=0, batch_size=1000, max_workers=5)
