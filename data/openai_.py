@@ -111,10 +111,8 @@ def process_row(idx, case_num, case_text):
     clean_text = preprocess_text(case_text)
     try:
         result = chain.invoke({"row_info": clean_text, **partial_vars})
-        print(case_num)
         summary = result["text"].model_dump()
         summary["case_num"] = case_num
-        print(summary)
         # return result['text'].model_dump() # Pydantic 모델 인스턴스를 딕셔너리로 변환
         return summary
     except Exception as e:
@@ -162,9 +160,9 @@ async def process_batch(df, start_index=0, batch_size=1000, max_workers=5):
 import nest_asyncio  # --------------- 주피터 실행코드입니다.
 
 nest_asyncio.apply()
-await process_batch(df, start_index=0, batch_size=1, max_workers=5)
+await process_batch(df, start_index=600, batch_size=400, max_workers=5)
 
 # 확인용
-split_df = pd.read_csv("./legal_summary_0_0.csv")
+split_df = pd.read_csv("./legal_summary_600_.csv")
 split_df.shape
 split_df.head()
