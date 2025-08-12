@@ -1,4 +1,4 @@
-# 0811 도원 수정 : 전체 파일 합친 후 임베딩하도록 변경, 프롬프트 변경
+# 0812 도원 수정 : 1. 전체 파일 합친 후 임베딩하도록 변경, 2. 프롬프트 변경
 
 from openai import OpenAI
 import streamlit as st
