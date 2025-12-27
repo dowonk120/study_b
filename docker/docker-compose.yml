@@ -1,0 +1,28 @@
+services:
+  law-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: law-service:latest
+    container_name: law-service
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../.env
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # 데이터 폴더 마운트
+      - ../data:/app/data:ro
+      # 캐시 폴더 (임베딩, 벡터스토어)
+      - ../mycache:/app/mycache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mycache:

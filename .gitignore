@@ -1,0 +1,34 @@
+# 환경 변수
+.env
+.env.local
+
+# 캐시 폴더
+mycache/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 로그
+*.log
+logs/
+
+# 임시 파일
+*.tmp
+*.temp
+tmp/
+temp/
+
+# 데이터 (대용량 - 필요시 주석 해제)
+# data/*.zip
+# data/*.csv

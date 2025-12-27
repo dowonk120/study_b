@@ -1,151 +1,491 @@
+# 법률 문서 요약 및 상담 챗봇 프로젝트
 
+ML + DL + LLM 융합 법률 서비스 플랫폼
 
-# 📄 법률 문서 요약 및 상담 챗봇 프로젝트
-ML + DL + LLM 융합 실제 적용 사례
+---
 
-## 🔍 링크
+## 목차
 
-법원 사이트 : https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+1. [프로젝트 개요](#프로젝트-개요)
+2. [주요 기능](#주요-기능)
+3. [기술 스택](#기술-스택)
+4. [프로젝트 구조](#프로젝트-구조)
+5. [설치 및 실행](#설치-및-실행)
+6. [Docker 실행](#docker-실행)
+7. [코드 최적화 내역](#코드-최적화-내역)
+8. [전체 코드 설명](#전체-코드-설명)
+9. [데이터 출처](#데이터-출처)
 
-api : https://www.data.go.kr/data/15057123/openapi.do?recommendDataYn=Y
+---
 
+## 프로젝트 개요
 
-## 🔍 프로젝트 개요
-
-### 📌 문제 인식
+### 문제 인식
 - 일반 사용자들은 계약서나 판례 같은 법률 문서를 읽고 이해하기 어려움
-
 - 법률 용어는 어렵고, 문서 길이도 길어 핵심 내용 파악이 어려움
 
-## 🎯 프로젝트 목표
-
+### 목표
 - 법률 문서를 자동 분류 → 요약 → 질의응답 형태로 처리
-
 - 사용자가 쉽게 이해하고 활용할 수 있는 챗봇 형태의 서비스 구현
 
-## 🛠️ 주요 기능
+---
 
-| 기능            | 설명                                 |
-| ------------- | ---------------------------------- |
-| 🧾 문서 분류 (ML) | 문서 유형 자동 분류 (ex. 계약서 / 판례 / 청구서 등) |
-| 🧠 요점 추출 (DL) | 문서 내 핵심 문장 및 키워드 추출 및 요약           |
-| 💬 질의응답 (LLM) | 사용자의 질문에 문서를 기반으로 응답 생성            |
-| 🌐 웹 UI (선택)  | Streamlit 또는 Gradio 기반 인터페이스 제공    |
+## 주요 기능
 
+| 기능 | 설명 |
+|------|------|
+| 사건 검색 시뮬레이션 | 사건 내용 입력 시 유사 판례 검색 및 승소 확률 예측 |
+| RAG 기반 상담 챗봇 | 판례 데이터 기반 법률 질의응답 |
+| LLM 키워드 추출 | GPT-4o-mini를 활용한 사건 도메인/쟁점 자동 분류 |
+| PDF 업로드 지원 | 사용자 문서 업로드 후 RAG 기반 상담 가능 |
+| 참조조문 설명 | LLM을 통한 법률 조문 쉬운 설명 제공 |
 
-## ⚙️ 기술 스택
+---
 
-| 범주          | 사용 기술                                                    |
-| ----------- | -------------------------------------------------------- |
-| 📂 데이터 처리   | `Pandas`, `scikit-learn`, `re`, `BeautifulSoup`          |
-| 🤖 머신러닝     | `TF-IDF` + `Logistic Regression`, `SVM`                  |
-| 🧠 딥러닝      | `PyTorch`, `transformers`, `KoBERT`, `KoELECTRA`, `LSTM` |
-| 🧾 요약 모델    | `KoBART`, 문장 임베딩 기반 중요도 추출                               |
-| 🔍 질의응답     | `ChatGPT API`, `GPT-3.5`, `KoGPT`, `RAG` 등               |
-| 🖥️ 웹 인터페이스 | `Streamlit`, `Gradio`, `FastAPI` (선택 사항)                 |
+## 기술 스택
 
-## 🧩 전체 시스템 아키텍처
+| 범주 | 사용 기술 |
+|------|----------|
+| Frontend | Streamlit |
+| LLM | OpenAI GPT-4o-mini |
+| Vector DB | FAISS |
+| Embedding | OpenAI Embeddings |
+| Framework | LangChain |
+| NLP (폴백) | KoNLPy (Okt) |
+| 데이터 처리 | Pandas |
 
-[사용자 문서 업로드]
+---
 
-         ↓
-         
-[1] 문서 전처리 및 정제
+## 프로젝트 구조
 
-         ↓
-         
-[2] 문서 유형 분류 (ML)
+```
+study_b/
+├── README.md                # 프로젝트 문서
+├── .gitignore               # Git 제외 파일
+├── .env.example             # 환경변수 예시
+│
+├── docker/                  # Docker 관련 파일
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── requirements.txt
+│   └── entrypoint.sh
+│
+├── scripts/                 # 소스 코드
+│   ├── law_page.py          # 메인 앱 (통합 버전)
+│   ├── law_str_llm.py       # 검색 전용 앱
+│   ├── law_str.py           # 기본 검색 앱
+│   ├── my_rag_chatbot.py    # RAG 챗봇
+│   └── preprocessing.py     # 데이터 전처리
+│
+├── data/                    # 데이터 파일
+│   ├── result_1_merged.zip  # 판례 데이터 1
+│   ├── result_2_merged.zip  # 판례 데이터 2
+│   ├── result_3_merged.zip  # 판례 데이터 3
+│   ├── result.zip           # 원본 데이터
+│   └── code_map.csv         # 사건코드 매핑
+│
+└── mycache/                 # 자동 생성 (Git 제외)
+    ├── files/               # 업로드 파일
+    ├── embedding/           # 임베딩 캐시
+    └── vectorstore/         # FAISS 인덱스
+```
 
-         ↓
-         
-[3] 핵심 문장 추출 / 요약 (DL)
+---
 
-         ↓
-         
-[4] LLM 기반 질의응답
+## 설치 및 실행 (로컬)
 
-         ↓
-         
-[5] 사용자에게 요약 및 응답 제공
+### 1. 의존성 설치
 
+```bash
+pip install -r docker/requirements.txt
+```
 
+### 2. 환경 변수 설정
 
-## 📁 데이터셋 구성
-- 문서 유형: 계약서, 민사/형사 판례, 청구서 등
+```bash
+cp .env.example .env
+# .env 파일에서 OPENAI_API_KEY 설정
+```
 
-- 데이터 출처: 국가법령정보센터, 공공데이터포털, 로폼 등
+### 3. 실행
 
-- 형태: .txt, .pdf → 텍스트 정제 처리
+```bash
+cd scripts
+streamlit run law_page.py
+```
 
-## 🔑 핵심 기술 설명
+브라우저에서 `http://localhost:8501` 접속
 
-| 구분              | 역할                 | 예시                            |
-| --------------- | ------------------ | ----------------------------- |
-| 🧠 ML (머신러닝)    | 구조화된 데이터 기반 분류, 예측 | 승소 여부 예측, 사건 유형 분류, 소요 기간 회귀  |
-| 🧠 DL (딥러닝)     | 텍스트 이해 및 요약, 벡터화   | 문서 요약, 임베딩, 중요 문장 추출          |
-| 🧠 LLM (대형언어모델) | 자유형 자연어 질문 응답, 추론  | "이 문서에서 을은 왜 졌나요?", RAG 기반 QA |
+### 4. 옵션: KoNLPy 설치 (폴백용)
 
+```bash
+# Java 설치 필요
+sudo apt-get install openjdk-11-jdk
+pip install konlpy JPype1
+```
 
+> KoNLPy가 없어도 앱은 정상 동작합니다 (simple 폴백 사용)
 
+---
 
-### 1️⃣ 문서 분류 (ML)
+## Docker 실행
 
+### 1. 환경 변수 설정
 
-- ML 항목 예시
-  
-| 항목       | 승패 예측                   | 소요 기간 예측            |
-| -------- | ----------------------- | ------------------- |
-| 🎯 문제 유형 | **분류 (Classification)** | **회귀 (Regression)** |
-| 🎯 예측값   | `0`, `1` (또는 다중 클래스)    | `243`, `365` (일 수)  |
-| 🎯 평가 지표 | Accuracy, F1-score, AUC | MAE, RMSE, R²       |
-| 🎯 학습 대상 | 승/패 라벨                  | 접수일 \~ 판결일 계산한 숫자   |
-| 🎯 모델 선택 | 로지스틱 회귀, SVM 등          | 선형 회귀, 랜덤 포레스트 회귀 등 |
+```bash
+cp .env.example .env
+# .env 파일에서 OPENAI_API_KEY 설정
+```
 
+### 2. Docker Compose로 실행
 
-- TF-IDF + Logistic Regression / SVM
+```bash
+cd docker
+docker-compose up -d
+```
 
-- Feature: 문서 제목 + 본문 일부
+### 3. 접속
 
-### 2️⃣ 요약 (DL)
+브라우저에서 `http://localhost:8501` 접속
 
-Extractive Summarization:
+### 4. 로그 확인
 
-- 문장 임베딩 + 중요도 기반 추출
+```bash
+docker-compose logs -f
+```
 
-- 또는 KoBART 활용
+### 5. 종료
 
-### 3️⃣ 질의응답 (LLM)
+```bash
+docker-compose down
+```
 
-- 문서 요약 + 사용자 질문을 Prompt에 결합
+### Docker 구성 요약
 
-예: "이 계약서에서 갑의 의무는?" → 적절한 자연어 응답 생성
+| 항목 | 값 |
+|------|-----|
+| 이미지 | law-service:latest |
+| 포트 | 8501 |
+| 데이터 | ./data → /app/data (읽기전용) |
+| 캐시 | ./mycache → /app/mycache |
 
-## 🗓️ 개발 일정 (4주 기준)
-| 주차              | 주요 내용                                                                   |
-| --------------- | ----------------------------------------------------------------------- |
-| **7/23 \~ 8/3** | - 데이터 수집 및 전처리<br>- 기능 구체화                                              |
-| **8/4 \~ 8/6**  | - LLM 기반 챗봇 연결<br>- 응답 품질 테스트                                           |
-| **8/7 \~ 8/13** | 1. 챗봇 성능 개선<br>2. 머신러닝용 데이터 전처리<br>3. 사용 모델 분석 및 이해<br>4. 스트림릿(웹 앱) 구체화 |
-| **4주차**         | - 전체 시스템 통합<br>- 웹 UI 개발<br>- 최종 보고서 작성                                 |
+---
 
+## 코드 최적화 내역
 
+기존 코드들의 장점을 통합하여 최적화했습니다.
 
-## ✅ 기대 효과
-- 일반 사용자도 법률 문서를 쉽게 이해할 수 있는 서비스 제공
+### 1. API Key 관리 통합
 
-- 실생활 활용 가능한 LLM 융합 프로젝트 경험 확보
+**기존 (law_page.py)**
+```python
+def get_api_key():
+    key = os.getenv("OPENAI_API_KEY")
+    if key:
+        return key
+    # session_state 미사용
+```
 
-- 텍스트 분류 → 요약 → 응답 전 과정을 아우르는 역량 강화
+**최적화 후**
+```python
+def get_api_key():
+    key = os.getenv("OPENAI_API_KEY") or st.session_state.get("OPENAI_API_KEY")
+    if not key:
+        with st.sidebar:
+            k = st.text_input("OPENAI_API_KEY 입력", type="password")
+            if k:
+                st.session_state["OPENAI_API_KEY"] = k
+                key = k
+    return key
+```
 
-## 🔚 마무리 코멘트
+> env와 session_state 둘 다 확인하여 유연성 향상
 
+---
 
-이 프로젝트는 머신러닝, 딥러닝, LLM이 명확히 역할 분담되면서도
-자연스럽게 연결되는 구조로,
+### 2. LLM 예외 처리 및 폴백
 
-실무에서 실제 구현 가능한 구조이며
+**기존 (law_page.py)**
+```python
+# 예외 처리 없음 - LLM 실패시 앱 크래시
+resp = client.chat.completions.create(...)
+return json.loads(resp.choices[0].message.content)
+```
 
-포트폴리오, 공모전, 발표용 사례로도 탁월한 선택입니다.
+**최적화 후**
+```python
+def llm_classify_intent(text, api_key):
+    try:
+        resp = client.chat.completions.create(...)
+        try:
+            return json.loads(txt)
+        except json.JSONDecodeError:
+            m = re.search(r"\{.*\}", txt, re.S)
+            return json.loads(m.group(0)) if m else {}
+    except Exception as e:
+        st.info(f"LLM 분석 실패 (자동 폴백): {e}")
+        return {}
+```
 
-## 결과 예시
-![결과 예시](결과예시이미지_gpt)
+> API 오류, JSON 파싱 오류 모두 안전하게 처리
+
+---
+
+### 3. KoNLPy 폴백 로직
+
+**기존 (law_page.py)**
+```python
+# KoNLPy 실패시 에러
+from konlpy.tag import Okt
+okt = Okt()  # Java 없으면 크래시
+```
+
+**최적화 후**
+```python
+def konlpy_extract_keywords_or_fallback(situation):
+    def simple_keywords(text):
+        priority = ['마약', '성폭행', '음주운전', '사기', ...]
+        found = [w for w in priority if w in text]
+        return found, '|'.join(found) if found else ".*"
+
+    try:
+        from konlpy.tag import Okt
+        okt = Okt()
+        nouns = okt.nouns(situation)
+        ...
+    except Exception as e:
+        st.info(f"KoNLPy 불가 (자동 폴백): {e}")
+        return simple_keywords(situation)
+```
+
+> Java 미설치 환경에서도 기본 키워드 매칭으로 동작
+
+---
+
+### 4. st.set_page_config 중복 제거
+
+**기존 (law_page.py)**
+```python
+st.set_page_config(...)  # 최상단
+...
+with tab1:
+    st.set_page_config(...)  # 중복 호출 -> 에러!
+```
+
+**최적화 후**
+```python
+# 최상단에서 한 번만 호출
+st.set_page_config(page_title="법률 서비스 통합", layout="wide")
+```
+
+---
+
+### 5. Import 통합 및 변수명 충돌 해결
+
+**기존**
+```python
+# 탭1과 탭2에서 각각 import
+with tab1:
+    import pandas as pd
+    df = load_data()  # 변수명 충돌
+
+with tab2:
+    import pandas as pd
+    df = load_data()  # 같은 이름!
+```
+
+**최적화 후**
+```python
+# 상단에서 한 번만 import
+import pandas as pd
+...
+with tab1:
+    df_search = load_data()  # 명확한 이름
+
+with tab2:
+    df_chat = load_data()    # 명확한 이름
+```
+
+---
+
+### 6. RAG 프롬프트 개선
+
+**기존 (law_page.py)**
+```python
+"Format the response in Markdown..."
+"답변후에 혹시 이 주제에 대해 더 궁금한 것이 있으신가요?"
+```
+
+**최적화 후 (chatbot.py에서 가져옴)**
+```python
+"""
+⛔ 반드시 유의하세요: context에 없는 내용은 절대 생성하지 마세요.
+...
+4️⃣ 판례나 사건번호가 있다면, 반드시 아래 형식을 따르세요:
+   ### ✅ 판례 예시
+   - 사건번호: [사건번호]
+   - 판결 내용 요약: [간략한 설명]
+...
+9️⃣ 출처가 context 기반인지, 모델의 사전 지식인지 반드시 명시하세요.
+"""
+```
+
+> 더 상세한 지침으로 답변 품질 향상
+
+---
+
+### 7. Document 생성 개선
+
+**기존**
+```python
+docs = [Document(page_content=str(row.to_dict())) for _, row in df.iterrows()]
+```
+
+**최적화 후**
+```python
+for i, row in sel_df.iterrows():
+    row_hash = hashlib.md5(str(row_dict).encode()).hexdigest()
+
+    # 참조조문별로 Document 분리
+    for 조문 in 참조조문.split(','):
+        content = f"""참조조문: {조문}
+배상책임: {row.get('배상책임', '')}
+주제: {row.get('주제', '')}
+..."""
+        docs.append(Document(
+            page_content=content,
+            metadata={"row_id": row_hash, "조문": 조문}
+        ))
+```
+
+> 조문별 분리 + 메타데이터 추가로 검색 정확도 향상
+
+---
+
+### 8. Stopwords 자동 생성
+
+**기존**
+```python
+# 수동으로 불용어 정의
+stopwords = {"어제", "먹고", "쳤어", ...}
+```
+
+**최적화 후**
+```python
+@st.cache_data
+def build_stopwords(df, top_n=100):
+    all_words = []
+    target_cols = ["판시사항", "판결요지", ...]
+    for col in target_cols:
+        texts = df[col].dropna().astype(str)
+        for text in texts:
+            all_words.extend(re.findall(r'[가-힣a-zA-Z0-9]{2,}', text))
+
+    common_words = [w for w, _ in Counter(all_words).most_common(top_n)]
+    extra_stopwords = {"어제", "먹고", ...}
+    return set(common_words).union(extra_stopwords)
+```
+
+> 데이터 기반 자동 생성 + 수동 추가 병합
+
+---
+
+## 전체 코드 설명
+
+### 코드 구조
+
+```
+law_page.py (772줄)
+│
+├── [1-45] 공통 Import
+│   └── 모든 필요한 라이브러리를 상단에서 한 번에 import
+│
+├── [46-60] 환경 설정
+│   ├── load_dotenv() - .env 파일 로드
+│   ├── st.set_page_config() - 페이지 설정 (한 번만)
+│   └── 캐시 폴더 생성
+│
+├── [62-90] 공통 유틸리티 함수
+│   ├── get_api_key() - API 키 관리
+│   ├── llm_available() - LLM 사용 가능 여부
+│   └── get_openai_client() - OpenAI 클라이언트 생성
+│
+├── [92-158] 데이터 로드 함수
+│   ├── load_data() - ZIP에서 CSV 로드 및 병합
+│   ├── load_code_map() - 사건코드 매핑 테이블
+│   └── build_stopwords() - 불용어 자동 생성
+│
+├── [160-291] 탭1 전용 함수
+│   ├── llm_classify_intent() - LLM 의도 분류
+│   ├── konlpy_extract_keywords_or_fallback() - 키워드 추출
+│   ├── explain_law_article() - 조문 설명 생성
+│   ├── extract_abbr() - 사건번호 약어 추출
+│   └── infer_domain_from_codes() - 도메인 추론
+│
+├── [293-445] 탭2 전용 함수
+│   ├── create_retriever_from_df() - DataFrame → Retriever
+│   ├── create_retriever_from_pdf() - PDF → Retriever
+│   └── create_rag_chain() - RAG 체인 생성
+│
+├── [447-462] 탭 스타일링 및 구성
+│
+├── [464-682] 탭1: 사건 검색 시뮬레이션
+│   ├── 입력 폼 (입장, 합의여부, 피해금액, 사건내용)
+│   ├── 검색 로직 (LLM → KoNLPy → simple 폴백)
+│   ├── 승률 계산 및 표시
+│   ├── 페이지네이션 결과 표시
+│   └── 통계 차트
+│
+├── [684-766] 탭2: RAG 기반 상담 챗봇
+│   ├── PDF 업로드 옵션
+│   ├── Retriever/Chain 생성
+│   ├── 채팅 인터페이스
+│   └── 질문 확장 및 응답 스트리밍
+│
+└── [768-772] 푸터
+```
+
+### 주요 함수 설명
+
+#### `get_api_key()` (Line 66-76)
+- OpenAI API 키를 환경변수 또는 세션에서 가져옴
+- 없으면 사이드바에서 입력 받음
+
+#### `load_data()` (Line 96-130)
+- 3개의 ZIP 파일에서 CSV 추출 및 병합
+- 불필요한 컬럼 제거, 결측치 처리
+- `@st.cache_data`로 캐싱하여 성능 최적화
+
+#### `llm_classify_intent()` (Line 164-215)
+- GPT-4o-mini로 사건 도메인(형사/민사/가사 등) 자동 분류
+- 검색 키워드 8~15개 추출
+- JSON 파싱 실패시 정규식으로 재시도
+
+#### `konlpy_extract_keywords_or_fallback()` (Line 218-248)
+- KoNLPy의 Okt로 명사 추출
+- Java 미설치시 simple_keywords() 폴백
+- 우선순위 키워드 매칭
+
+#### `create_retriever_from_df()` (Line 297-348)
+- DataFrame을 FAISS 벡터 DB로 변환
+- 해시 기반 캐싱으로 재생성 방지
+- 조문별 Document 분리로 검색 정확도 향상
+
+#### `create_rag_chain()` (Line 387-444)
+- LangChain의 RunnableMap으로 RAG 파이프라인 구성
+- 개선된 프롬프트로 답변 품질 향상
+- 스트리밍 응답 지원
+
+---
+
+## 데이터 출처
+
+- 법원 사이트: https://portal.scourt.go.kr/pgp/index.on?m=PGP1011M01&l=N&c=900
+- 공공데이터 API: https://www.data.go.kr/data/15057123/openapi.do
+
+---
+
+## 주의사항
+
+본 서비스는 참고용이며, 실제 법률 자문이 아닙니다.
+정확한 법률 상담은 전문 변호사에게 문의하세요.
